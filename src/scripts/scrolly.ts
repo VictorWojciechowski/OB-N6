@@ -1,10 +1,5 @@
-import * as AnimePkg from "animejs";
+import anime from "animejs/lib/anime.es";
 
-// récupère "anime" quel que soit le format d'export
-const anime: any =
-  (AnimePkg as any).default ??
-  (AnimePkg as any).anime ??
-  (AnimePkg as any);
 
 function splitLines(text: string) {
   return text
