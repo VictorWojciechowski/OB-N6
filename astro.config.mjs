@@ -1,5 +1,5 @@
 import { defineConfig } from "astro/config";
-import vercel from "@astrojs/vercel/serverless";
+import netlify from "@astrojs/netlify/server";
 
 export default defineConfig({
   output: "server",
