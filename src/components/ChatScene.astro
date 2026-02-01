@@ -1,0 +1,140 @@
+<section class="chat-scene" id="chat">
+  <div class="head-area">
+    <div class="head">
+      <canvas id="headCanvas" class="head-canvas" aria-label="Tête AI"></canvas>
+    </div>
+
+    <div class="bubble" id="bubble">
+      <p id="bubbleText">Pose-moi une question…</p>
+    </div>
+  </div>
+
+  <form class="chat-form" onsubmit="return window.__sendChat(event)">
+    <input id="chatInput" type="text" placeholder="Écris ici…" autocomplete="off" required />
+    <button type="submit">Envoyer</button>
+  </form>
+</section>
+
+<!-- ✅ WebGL bundlé par Vite -->
+<script type="module" src="/src/scripts/head3d.js"></script>
+
+<script>
+  // ✅ ton chat inchangé
+  const input = document.getElementById("chatInput");
+  const bubbleText = document.getElementById("bubbleText");
+
+  const KEY = "chat_session_id";
+  let sessionId = localStorage.getItem(KEY) || crypto.randomUUID();
+  localStorage.setItem(KEY, sessionId);
+
+  window.__sendChat = async (e) => {
+    e.preventDefault();
+
+    const message = input.value.trim();
+    if (!message) return false;
+
+    bubbleText.textContent = "…";
+    input.value = "";
+
+    // 🔥 on notifie WebGL qu’on “think”
+    window.__head3d_setThinking?.(true);
+
+    try {
+      const res = await fetch("/api/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ message, sessionId }),
+      });
+
+      const text = await res.text();
+      window.__head3d_setThinking?.(false);
+
+      if (!res.ok) {
+        bubbleText.textContent = `Erreur API (${res.status}) : ${text}`;
+        window.__head3d_error?.();
+        return false;
+      }
+
+      const data = JSON.parse(text);
+      bubbleText.textContent = data.reply ?? "(réponse vide)";
+      window.__head3d_pulse?.();
+    } catch (err) {
+      window.__head3d_setThinking?.(false);
+      bubbleText.textContent = `Erreur réseau : ${String(err)}`;
+      window.__head3d_error?.();
+    }
+
+    return false;
+  };
+</script>
+
+<style>
+  .chat-scene {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    gap: 40px;
+    padding: 48px 20px;
+    background: #000;
+    color: #fff;
+  }
+
+  .head-area {
+    position: relative;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+
+  .head { filter: drop-shadow(0 0 30px rgba(0, 217, 255, 0.35)); }
+
+  /* ✅ IMPORTANT: taille CSS du canvas */
+  .head-canvas {
+    width: 300px;
+    height: 375px;
+    display: block;
+    background: transparent;
+  }
+
+  .bubble {
+    position: absolute;
+    left: calc(100% + 30px);
+    top: 50%;
+    transform: translateY(-50%);
+    width: min(400px, 70vw);
+    padding: 24px 28px;
+    border-radius: 24px;
+    border: 2px solid rgba(0, 217, 255, 0.4);
+    background: rgba(0, 40, 80, 0.6);
+    backdrop-filter: blur(16px);
+  }
+
+  .bubble p { margin: 0; font-size: 17px; line-height: 1.6; white-space: pre-wrap; }
+
+  .chat-form { display: flex; gap: 14px; width: min(600px, 92vw); }
+  .chat-form input {
+    flex: 1;
+    padding: 16px 20px;
+    border-radius: 16px;
+    border: 2px solid rgba(0, 217, 255, 0.3);
+    background: rgba(255, 255, 255, 0.03);
+    color: #fff;
+    outline: none;
+    font-size: 16px;
+  }
+  .chat-form button {
+    padding: 16px 32px;
+    border-radius: 16px;
+    border: 2px solid rgba(0, 217, 255, 0.5);
+    background: rgba(0, 217, 255, 0.1);
+    color: #fff;
+    cursor: pointer;
+    font-weight: 600;
+  }
+
+  @media (max-width: 968px) {
+    .bubble { position: static; transform: none; margin-top: 30px; }
+  }
+</style>

@@ -9,6 +9,8 @@
     "astro": "astro"
   },
   "dependencies": {
-    "astro": "^5.17.1"
+    "animejs": "^3.2.2",
+    "astro": "^5.17.1",
+    "three": "^0.182.0"
   }
 }
